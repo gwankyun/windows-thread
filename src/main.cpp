@@ -1,30 +1,47 @@
+#include <Windows.h>
+#if defined(HAS_SPDLOG)
+#  define SPDLOG_ACTIVE_LEVEL SPDLOG_INFO
+#  include <spdlog/spdlog.h>
+#else
+#  define SPDLOG_INFO(...)
+#endif // defined(HAS_SPDLOG)
 #include <iostream>
 #include <string>
 #include <cstring>
-#include <Windows.h>
 
-inline std::string getFunc(const std::string& func)
-{
-    char str[10];
-    memset(str, ' ', sizeof(str));
-    str[9] = '\0';
-    memcpy_s(str, sizeof(str) - 1, func.c_str(), sizeof(str) - 1 < func.size() ? sizeof(str) - 1 : func.size());
-    return std::string(str);
-}
+#if defined(USE_LITE)
+#  include <thread.hpp>
+#  include <mutex.hpp>
+#else
+#  include <thread>
+#  include <mutex>
+#endif // defined(USE_LITE)
 
-inline std::string getLine(int line)
-{
-    char str[20];
-    memset(str, '\0', sizeof(str));
-    sprintf_s(str, sizeof(str), "% 5d", line);
-    return std::string(str);
-}
+#if !defined(THREAD)
+#  if defined(USE_LITE)
+#    define THREAD lite::thread
+#else
+#    define THREAD std::thread
+#  endif // defined(USE_LITE)
+#endif // !THREAD
 
-#ifndef LOG
-#  define LOG() std::cout << "[" << getFunc(__func__) << ":" <<  getLine(__LINE__) << "] "
-#endif // !LOG
+#if !defined(MUTEX)
+#  if defined(USE_LITE)
+#    define MUTEX lite::mutex
+#else
+#    define MUTEX std::mutex
+#  endif // defined(USE_LITE)
+#endif // !MUTEX
 
-HANDLE g_mutex = NULL;
+#if !defined(LOCK_GUARD)
+#  if defined(USE_LITE)
+#    define LOCK_GUARD lite::lock_guard
+#else
+#    define LOCK_GUARD std::lock_guard
+#  endif // defined(USE_LITE)
+#endif // !MUTEX
+
+MUTEX g_mutex;
 
 struct RunData
 {
@@ -35,46 +52,37 @@ DWORD WINAPI run(LPVOID param)
 {
     for (size_t i = 0; i < 10; i++)
     {
-        WaitForSingleObject(g_mutex, INFINITE);
-        LOG() << i << "\n";
-        ReleaseMutex(g_mutex);
+        LOCK_GUARD<MUTEX> lock(g_mutex);
+        SPDLOG_INFO("{}", __func__);
     }
 
-    WaitForSingleObject(g_mutex, INFINITE);
+    LOCK_GUARD<MUTEX> lock(g_mutex);
     RunData* data = static_cast<RunData*>(param);
     if (data != NULL)
     {
         data->finished = true;
     }
-    ReleaseMutex(g_mutex);
 
     return 0;
 }
 
 int main()
 {
-    g_mutex = CreateMutex(NULL, FALSE, "g_mutex");
-    if (g_mutex == NULL)
-    {
-        return 1;
-    }
-
     RunData data;
-    HANDLE runThread = CreateThread(NULL, 0, run, &data, 0, NULL);
-    if (runThread == NULL)
-    {
-        return 1;
-    }
-    CloseHandle(runThread);
+    THREAD runThread(run, &data);
 
     bool finished = false;
     while (!finished)
     {
-        WaitForSingleObject(g_mutex, INFINITE);
+        LOCK_GUARD<MUTEX> lock(g_mutex);
         finished = data.finished;
-        LOG() << "\n";
+        SPDLOG_INFO("{}", __func__);
         Sleep(100);
-        ReleaseMutex(g_mutex);
+    }
+
+    if (runThread.joinable())
+    {
+        runThread.join();
     }
 
     return 0;
