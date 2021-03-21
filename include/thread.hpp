@@ -8,35 +8,39 @@ namespace lite
     public:
         typedef HANDLE native_handle_type;
 
-        thread()
-            : m_base(NULLPTR)
-            , m_handle(NULL)
+        thread() NOEXCEPT
         {
         }
 
         template<typename F, typename Arg>
         explicit thread(F f, Arg arg)
-            : m_base(new Derived(f, arg))
-            , m_handle(NULL)
         {
-            if (m_base != NULL)
+            m_data.base = new Derived(f, arg);
+            if (m_data.base != NULLPTR)
             {
-                m_handle = CreateThread(NULL, 0, f, arg, 0, NULL);
+                m_data.handle = CreateThread(NULL, 0, f, arg, 0, NULL);
             }
         }
 
         ~thread()
         {
-            if (m_handle != NULL)
+            if (native_handle() != NULL)
             {
-                CloseHandle(m_handle);
-                m_handle = NULL;
+                CloseHandle(m_data.handle);
+                m_data.handle = NULL;
             }
-            if (m_base != NULLPTR)
+            if (m_data.base != NULLPTR)
             {
-                delete m_base;
-                m_base = NULLPTR;
+                delete m_data.base;
+                m_data.base = NULLPTR;
             }
+        }
+
+        void swap(thread& other) NOEXCEPT
+        {
+            Data temp = m_data;
+            m_data = other.m_data;
+            other.m_data = temp;
         }
 
         bool joinable() const NOEXCEPT
@@ -50,7 +54,7 @@ namespace lite
 
         native_handle_type native_handle()
         {
-            return m_handle;
+            return m_data.handle;
         }
 
     private:
@@ -82,8 +86,19 @@ namespace lite
             Arg m_arg;
         };
 
-        Base* m_base;
-        native_handle_type m_handle;
+        struct Data
+        {
+            Data()
+                : base(NULLPTR)
+                , handle(NULL)
+            {
+            }
+            ~Data() {}
+            Base* base;
+            native_handle_type handle;
+        };
+
+        Data m_data;
     };
 
 }
