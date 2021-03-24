@@ -54,14 +54,15 @@ DWORD WINAPI run(LPVOID param)
     {
         LOCK_GUARD<MUTEX> lock(g_mutex);
         SPDLOG_INFO("{}", __func__);
+        Sleep(1000);
     }
 
-    LOCK_GUARD<MUTEX> lock(g_mutex);
-    RunData* data = static_cast<RunData*>(param);
-    if (data != NULL)
-    {
-        data->finished = true;
-    }
+    //LOCK_GUARD<MUTEX> lock(g_mutex);
+    //RunData* data = static_cast<RunData*>(param);
+    //if (data != NULL)
+    //{
+    //    data->finished = true;
+    //}
 
     return 0;
 }
@@ -72,18 +73,20 @@ int main()
     THREAD runThread(run, &data);
 
     bool finished = false;
-    while (!finished)
-    {
-        LOCK_GUARD<MUTEX> lock(g_mutex);
-        finished = data.finished;
-        SPDLOG_INFO("{}", __func__);
-        Sleep(100);
-    }
+    //while (!finished)
+    //{
+    //    LOCK_GUARD<MUTEX> lock(g_mutex);
+    //    //finished = data.finished;
+    //    SPDLOG_INFO("{}", __func__);
+    //    Sleep(100);
+    //}
 
     if (runThread.joinable())
     {
         runThread.join();
     }
+
+    SPDLOG_INFO("{}", __func__);
 
     return 0;
 }

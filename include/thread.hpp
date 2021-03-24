@@ -8,6 +8,29 @@ namespace lite
     public:
         typedef HANDLE native_handle_type;
 
+        class id
+        {
+        public:
+            id()
+            {
+            }
+
+            ~id()
+            {
+            }
+
+            friend class thread;
+            friend bool operator==(thread::id lhs, thread::id rhs) NOEXCEPT;
+            friend bool operator!=(thread::id lhs, thread::id rhs) NOEXCEPT;
+            friend bool operator<(thread::id lhs, thread::id rhs) NOEXCEPT;
+            friend bool operator<=(thread::id lhs, thread::id rhs) NOEXCEPT;
+            friend bool operator>(thread::id lhs, thread::id rhs) NOEXCEPT;
+            friend bool operator>=(thread::id lhs, thread::id rhs) NOEXCEPT;
+
+        private:
+            DWORD m_id;
+        };
+
         thread() NOEXCEPT
         {
         }
@@ -18,22 +41,13 @@ namespace lite
             m_data.base = new Derived(f, arg);
             if (m_data.base != NULLPTR)
             {
-                m_data.handle = CreateThread(NULL, 0, f, arg, 0, NULL);
+                m_data.handle = CreateThread(NULLPTR, 0, f, arg, 0, &(m_id.m_id));
             }
         }
 
         ~thread()
         {
-            if (native_handle() != NULL)
-            {
-                CloseHandle(m_data.handle);
-                m_data.handle = NULL;
-            }
-            if (m_data.base != NULLPTR)
-            {
-                delete m_data.base;
-                m_data.base = NULLPTR;
-            }
+            m_data.close();
         }
 
         void swap(thread& other) NOEXCEPT
@@ -50,6 +64,12 @@ namespace lite
 
         void join()
         {
+            WaitForSingleObject(native_handle(), INFINITE);
+        }
+
+        id get_id() const NOEXCEPT
+        {
+            return m_id;
         }
 
         native_handle_type native_handle()
@@ -90,15 +110,58 @@ namespace lite
         {
             Data()
                 : base(NULLPTR)
-                , handle(NULL)
+                , handle(NULLPTR)
             {
             }
             ~Data() {}
+            void close()
+            {
+                if (handle != NULLPTR)
+                {
+                    CloseHandle(handle);
+                    handle = NULLPTR;
+                }
+                if (base != NULLPTR)
+                {
+                    delete base;
+                    base = NULLPTR;
+                }
+            }
             Base* base;
             native_handle_type handle;
         };
 
         Data m_data;
+        id m_id;
     };
 
+    inline bool operator==(thread::id lhs, thread::id rhs) NOEXCEPT
+    {
+        return lhs.m_id == lhs.m_id;
+    }
+
+    inline bool operator!=(thread::id lhs, thread::id rhs) NOEXCEPT
+    {
+        return lhs.m_id != lhs.m_id;
+    }
+
+    inline bool operator<(thread::id lhs, thread::id rhs) NOEXCEPT
+    {
+        return lhs.m_id < lhs.m_id;
+    }
+
+    inline bool operator<=(thread::id lhs, thread::id rhs) NOEXCEPT
+    {
+        return lhs.m_id <= lhs.m_id;
+    }
+
+    inline bool operator>(thread::id lhs, thread::id rhs) NOEXCEPT
+    {
+        return lhs.m_id > lhs.m_id;
+    }
+
+    inline bool operator>=(thread::id lhs, thread::id rhs) NOEXCEPT
+    {
+        return lhs.m_id >= lhs.m_id;
+    }
 }

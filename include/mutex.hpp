@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hpp"
+#include <cassert>
 
 namespace lite
 {
@@ -9,9 +10,9 @@ namespace lite
         typedef HANDLE native_handle_type;
 
         CONSTEXPR_DYNAMIC_ALLOC mutex() NOEXCEPT
-            : m_handle(CreateMutex(NULL, FALSE, ""))
+            : m_handle(CreateMutex(NULLPTR, FALSE, ""))
         {
-            if (m_handle == NULL)
+            if (m_handle == NULLPTR)
             {
                 SPDLOG_INFO("{} {}", __func__, GetLastError());
             }
@@ -19,15 +20,26 @@ namespace lite
 
         ~mutex()
         {
+            if (m_handle == NULLPTR)
+            {
+                CloseHandle(m_handle);
+                m_handle = NULLPTR;
+            }
         }
 
         void lock()
         {
+#if _DEBUG
+            assert(m_handle != NULLPTR);
+#endif // _DEBUG
             WaitForSingleObject(m_handle, INFINITE);
         }
 
         void unlock()
         {
+#if _DEBUG
+            assert(m_handle != NULLPTR);
+#endif // _DEBUG
             ReleaseMutex(m_handle);
         }
 
@@ -37,7 +49,7 @@ namespace lite
         }
 
     private:
-        mutex(const mutex&): m_handle(NULL) {};
+        mutex(const mutex&): m_handle(NULLPTR) {};
         mutex& operator=(const mutex&) { return *this; }
 
         native_handle_type m_handle;
