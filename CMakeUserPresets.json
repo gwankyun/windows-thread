@@ -1,0 +1,21 @@
+{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "VS2022",
+            "inherits": "vcpkg",
+            "generator": "Visual Studio 17 2022",
+            "environment": {
+                "VCPKG_ROOT": "c:/local/vcpkg"
+            }
+        },
+        {
+            "name": "clang",
+            "inherits": "vcpkg",
+            "generator": "Ninja",
+            "environment": {
+                "VCPKG_ROOT": "c:/local/vcpkg"
+            }
+        }
+    ]
+}
