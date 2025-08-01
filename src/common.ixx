@@ -1,10 +1,11 @@
 ﻿module;
 #include <windows.h>
+#include "common.h"
 
 export module common;
 import std;
 
-export namespace lite
+EXPORT namespace lite
 {
     enum class wait_status
     {
@@ -17,6 +18,11 @@ export namespace lite
 
     // 為了兼容C++11之前的代碼。
     typedef wait_status wait_status_type;
+
+    struct infinite
+    {
+        static const std::uint32_t value = INFINITE;
+    };
 } // namespace lite
 
 export namespace lite
@@ -29,9 +35,9 @@ export namespace lite
         virtual ~IClose() = default;
     };
 
-    wait_status_type wait(HANDLE _handle, std::uint32_t _milliseconds = INFINITE)
+    wait_status_type wait(HANDLE _handle, std::uint32_t _milliseconds = infinite::value)
     {
-        DWORD result = WaitForSingleObject(_handle, _milliseconds);
+        DWORD result = ::WaitForSingleObject(_handle, _milliseconds);
         switch (result)
         {
         case WAIT_OBJECT_0:
@@ -55,13 +61,13 @@ export namespace lite
       public:
         Handle() = default;
         ~Handle() = default;
-        wait_status_type wait(std::uint32_t _milliseconds = INFINITE)
+        wait_status_type wait(std::uint32_t _milliseconds = infinite::value)
         {
             return lite::wait(m_handle, _milliseconds);
         }
         void close()
         {
-            CloseHandle(m_handle);
+            ::CloseHandle(m_handle);
         }
 
       private:

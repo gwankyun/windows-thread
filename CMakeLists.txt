@@ -11,12 +11,18 @@ find_package(Catch2 CONFIG REQUIRED)
 
 add_executable(main)
 target_sources(main
+  PRIVATE
+    src/common.h
   PRIVATE FILE_SET CXX_MODULES FILES
     src/thread.ixx
     src/thread.detail.ixx
     src/mutex.ixx
+    src/mutex.detail.ixx
     src/common.ixx
     src/event.ixx
+    src/event.detail.ixx
+    src/critical_section.ixx
+    src/condition_variable.ixx
     src/main.ixx
 )
 target_link_libraries(main

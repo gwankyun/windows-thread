@@ -1,15 +1,12 @@
 ﻿module;
-
-#define NULLPTR nullptr
-#define NOEXCEPT noexcept
-#define OVERRIDE override
+#include "common.h"
 
 export module thread;
 import std;
 import common;
 import thread.detail;
 
-export namespace lite
+EXPORT namespace lite
 {
     class thread
     {
@@ -22,7 +19,7 @@ export namespace lite
             detail::thread::id value;
         };
 
-        thread() : hasInit(false)
+        thread() NOEXCEPT : hasInit(false)
         {
         }
 
@@ -47,6 +44,10 @@ export namespace lite
             detail::thread::join(handle);
         }
 
+        void detach()
+        {
+        }
+
         native_handle_type native_handle()
         {
             return handle.handle;
@@ -62,6 +63,7 @@ export namespace lite
       private:
         detail::thread::type handle;
         bool hasInit;
+        NO_COPY_ASSIGN(thread);
     };
 
     class jthread
@@ -107,5 +109,6 @@ export namespace lite
 
       private:
         thread m_thread;
+        NO_COPY_ASSIGN(jthread);
     };
 } // namespace lite

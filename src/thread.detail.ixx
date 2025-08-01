@@ -1,14 +1,11 @@
 ﻿module;
 #include <windows.h>
-
-#define NULLPTR nullptr
-#define NOEXCEPT noexcept
-#define OVERRIDE override
+#include "common.h"
 
 export module thread.detail;
 import common;
 
-export namespace detail::thread
+EXPORT namespace detail::thread
 {
     struct Base
     {
@@ -20,7 +17,7 @@ export namespace detail::thread
     template <typename F>
     struct Derived : public Base
     {
-        explicit Derived(F f) : m_f(f)
+        explicit Derived(F _f) : f(_f)
         {
         }
         ~Derived()
@@ -29,11 +26,11 @@ export namespace detail::thread
 
         void run() OVERRIDE
         {
-            m_f();
+            f();
         }
 
       private:
-        F m_f;
+        F f;
     };
 
     struct function
@@ -46,11 +43,11 @@ export namespace detail::thread
         ~function() {};
 
         // 线程函数
-        static DWORD WINAPI start_routine(LPVOID lpParam)
+        static DWORD WINAPI start(LPVOID lpParam)
         {
-            // 将传入的参数转换为 thread_function 指针
-            auto self = static_cast<function*>(lpParam);
-            if (self)
+            // 将传入的参数转换为function指针
+            function* self = static_cast<function*>(lpParam);
+            if (self != NULLPTR)
             {
                 // 调用存储的可调用对象
                 if (self->base != NULLPTR)
@@ -62,12 +59,16 @@ export namespace detail::thread
             // 添加返回值
             return 0;
         }
+
+      private:
         Base* base;
     };
 
     struct type
     {
-        type() = default;
+        type() : handle(NULLPTR), id(-1), fn(NULLPTR)
+        {
+        }
         ~type()
         {
             if (fn != NULLPTR)
@@ -75,13 +76,13 @@ export namespace detail::thread
                 delete fn;
             }
         }
-        // 使用 delete 关键字显式删除拷贝构造函数
-        type(const type&) = delete;
-        // 使用 delete 关键字显式删除赋值运算符重载
-        type& operator=(const type&) = delete;
-        HANDLE handle = NULLPTR;
-        DWORD id = -1;
-        function* fn = nullptr;
+
+        HANDLE handle; // NULLPTR
+        DWORD id;      // -1
+        function* fn;  // NULLPTR
+
+    private:
+        NO_COPY_ASSIGN(type);
     };
 
     template <typename Fn>
@@ -90,12 +91,12 @@ export namespace detail::thread
         _t.fn = new function(_fn);
 
         // 创建线程
-        _t.handle = CreateThread(NULLPTR,                 // 默认安全属性
-                                 0,                       // 默认栈大小
-                                 function::start_routine, // 线程函数
-                                 _t.fn,                   // 传递给线程函数的参数
-                                 0,                       // 默认创建标志
-                                 &_t.id                   // 线程 ID
+        _t.handle = CreateThread(NULLPTR,         // 默认安全属性
+                                 0,               // 默认栈大小
+                                 function::start, // 线程函数
+                                 _t.fn,           // 传递给线程函数的参数
+                                 0,               // 默认创建标志
+                                 &_t.id           // 线程 ID
         );
         if (_t.handle == NULLPTR)
         {
@@ -107,7 +108,6 @@ export namespace detail::thread
     void join(type& _t)
     {
         // 等待线程结束
-        // WaitForSingleObject(_t.handle, INFINITE);
         lite::wait(_t.handle);
 
         // 关闭线程句柄
