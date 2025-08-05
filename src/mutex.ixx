@@ -78,7 +78,7 @@ EXPORT namespace lite
     {
       public:
         typedef Mutex mutex_type;
-        unique_lock() NOEXCEPT : m_mutex(NULLPTR)
+        unique_lock() NOEXCEPT
         {
         }
 
@@ -89,7 +89,7 @@ EXPORT namespace lite
 
         ~unique_lock()
         {
-            if (m_mutex != NULLPTR)
+            if (m_mutex.get())
             {
                 unlock();
             }
@@ -97,22 +97,31 @@ EXPORT namespace lite
 
         void lock()
         {
-            m_mutex->lock();
+            if (m_mutex.get())
+            {
+                m_mutex->lock();
+            }
         }
 
         void unlock()
         {
-            m_mutex->unlock();
+            if (m_mutex.get())
+            {
+                m_mutex->unlock();
+            }
         }
 
         bool try_lock()
         {
-            m_mutex->try_lock();
+            if (m_mutex.get())
+            {
+                m_mutex->try_lock();
+            }
         }
 
-        mutex_type* mutex() const 
+        mutex_type* mutex() const
         {
-            return m_mutex;
+            return m_mutex.get();
         }
 
         void swap(unique_lock& other) NOEXCEPT
@@ -122,14 +131,12 @@ EXPORT namespace lite
 
         mutex_type* release() NOEXCEPT
         {
-            mutex_type* temp = m_mutex;
-            m_mutex = NULLPTR;
-            return temp;
+            return m_mutex.release();
         }
 
         bool owns_lock() const NOEXCEPT
         {
-            if (m_mutex == NULLPTR)
+            if (m_mutex.get() == NULLPTR)
             {
                 return false;
             }
@@ -142,7 +149,7 @@ EXPORT namespace lite
         }
 
       private:
-        mutex_type* m_mutex;
+        lite::ptr<mutex_type> m_mutex;
         NO_COPY_ASSIGN(unique_lock);
     };
 

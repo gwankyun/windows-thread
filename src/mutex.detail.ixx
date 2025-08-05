@@ -1,11 +1,11 @@
 module;
-#include <windows.h>
 #include "common.h"
+#include <windows.h>
 
 export module mutex.detail;
 import common;
 
-EXPORT namespace detail::mutex
+EXPORT namespace detail_mutex
 {
     typedef HANDLE native_handle_type;
 
@@ -14,28 +14,28 @@ EXPORT namespace detail::mutex
         native_handle_type handle;
     };
 
-    bool create(type& _t)
+    bool create(type & _t)
     {
         _t.handle = CreateMutex(NULL, FALSE, NULL);
         return true;
     }
 
-    void close(type& _t)
+    void close(type & _t)
     {
         CloseHandle(_t.handle);
     }
 
-    void lock(type& _t)
+    void lock(type & _t)
     {
         lite::wait(_t.handle);
     }
 
-    bool try_lock(type& _t)
+    bool try_lock(type & _t)
     {
         return lite::wait(_t.handle, 0) == lite::wait_status::ready;
     }
 
-    void unlock(type& _t)
+    void unlock(type & _t)
     {
         ReleaseMutex(_t.handle);
     }
@@ -51,7 +51,13 @@ EXPORT namespace detail::mutex
             unlock(t);
         }
         type& t;
-    private:
+
+      private:
         NO_COPY_ASSIGN(lock_guard);
     };
 } // namespace detail::mutex
+
+EXPORT namespace detail
+{
+    namespace mutex = detail_mutex;
+}

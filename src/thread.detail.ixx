@@ -1,11 +1,11 @@
 ﻿module;
-#include <windows.h>
 #include "common.h"
+#include <windows.h>
 
 export module thread.detail;
 import common;
 
-EXPORT namespace detail::thread
+EXPORT namespace detail_thread
 {
     struct Base
     {
@@ -17,12 +17,8 @@ EXPORT namespace detail::thread
     template <typename F>
     struct Derived : public Base
     {
-        explicit Derived(F _f) : f(_f)
-        {
-        }
-        ~Derived()
-        {
-        }
+        explicit Derived(F _f) : f(_f) {};
+        ~Derived() {};
 
         void run() OVERRIDE
         {
@@ -35,12 +31,21 @@ EXPORT namespace detail::thread
 
     struct function
     {
+        function() {};
         template <typename Fn>
         function(Fn _fn) : base(new Derived<Fn>(_fn))
         {
         }
 
         ~function() {};
+
+        void run()
+        {
+            if (base.get())
+            {
+                base->run();
+            }
+        }
 
         // 线程函数
         static DWORD WINAPI start(LPVOID lpParam)
@@ -50,10 +55,7 @@ EXPORT namespace detail::thread
             if (self != NULLPTR)
             {
                 // 调用存储的可调用对象
-                if (self->base != NULLPTR)
-                {
-                    self->base->run();
-                }
+                self->run();
                 return 0;
             }
             // 添加返回值
@@ -61,42 +63,38 @@ EXPORT namespace detail::thread
         }
 
       private:
-        Base* base;
+        lite::ptr<Base> base;
+        NO_COPY_ASSIGN(function);
     };
 
     struct type
     {
-        type() : handle(NULLPTR), id(-1), fn(NULLPTR)
+        type() : handle(NULLPTR), id(-1)
         {
         }
-        ~type()
-        {
-            if (fn != NULLPTR)
-            {
-                delete fn;
-            }
-        }
+
+        ~type() {};
 
         HANDLE handle; // NULLPTR
         DWORD id;      // -1
-        function* fn;  // NULLPTR
+        lite::ptr<function> fn;
 
-    private:
+      private:
         NO_COPY_ASSIGN(type);
     };
 
     template <typename Fn>
-    bool create(type& _t, Fn _fn)
+    bool create(type & _t, Fn _fn)
     {
         _t.fn = new function(_fn);
 
         // 创建线程
-        _t.handle = CreateThread(NULLPTR,         // 默认安全属性
-                                 0,               // 默认栈大小
-                                 function::start, // 线程函数
-                                 _t.fn,           // 传递给线程函数的参数
-                                 0,               // 默认创建标志
-                                 &_t.id           // 线程 ID
+        _t.handle = ::CreateThread(NULLPTR,         // 默认安全属性
+                                   0,               // 默认栈大小
+                                   function::start, // 线程函数
+                                   _t.fn.get(),     // 传递给线程函数的参数
+                                   0,               // 默认创建标志
+                                   &_t.id           // 线程 ID
         );
         if (_t.handle == NULLPTR)
         {
@@ -105,7 +103,7 @@ EXPORT namespace detail::thread
         return true;
     }
 
-    void join(type& _t)
+    void join(type & _t)
     {
         // 等待线程结束
         lite::wait(_t.handle);
@@ -116,4 +114,9 @@ EXPORT namespace detail::thread
 
     typedef HANDLE native_handle_type;
     typedef DWORD id;
-} // namespace detail::thread
+} // namespace detail_thread
+
+EXPORT namespace detail
+{
+    namespace thread = detail_thread;
+}

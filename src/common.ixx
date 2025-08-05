@@ -1,6 +1,7 @@
 ﻿module;
-#include <windows.h>
 #include "common.h"
+#include <cassert>
+#include <windows.h>
 
 export module common;
 import std;
@@ -72,5 +73,70 @@ export namespace lite
 
       private:
         HANDLE m_handle = NULL;
+    };
+
+    template <typename T>
+    class ptr
+    {
+      public:
+        ptr(T* _ptr = NULLPTR) : m_ptr(_ptr)
+        {
+        }
+
+        ptr& operator=(T* _ptr)
+        {
+            reset(_ptr);
+            return *this;
+        }
+
+        ~ptr()
+        {
+            this->reset();
+        }
+
+        T* get()
+        {
+            return m_ptr;
+        }
+
+        // 重载解引用运算符
+        T& operator*() const
+        {
+            return *m_ptr;
+        }
+
+        // 重载成员访问运算符
+        T* operator->() const
+        {
+            assert(m_ptr != NULLPTR);
+            return m_ptr;
+        }
+
+        // 获取原生指针
+        T* get() const
+        {
+            return m_ptr;
+        }
+
+        // 重置指针
+        void reset(T* ptr = NULLPTR) NOEXCEPT
+        {
+            if (m_ptr != ptr)
+            {
+                delete m_ptr;
+                m_ptr = ptr;
+            }
+        }
+
+        T* release() NOEXCEPT
+        {
+            T* temp = this->get();
+            m_ptr = NULLPTR;
+            return temp;
+        }
+
+      private:
+        T* m_ptr;
+        NO_COPY_ASSIGN(ptr);
     };
 }; // namespace lite

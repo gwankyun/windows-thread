@@ -12,31 +12,31 @@ export namespace lite
         typedef CRITICAL_SECTION* native_handle_type;
         critical_section()
         {
-            InitializeCriticalSection(handle);
+            InitializeCriticalSection(&handle);
         }
 
         ~critical_section()
         {
-            DeleteCriticalSection(handle);
+            DeleteCriticalSection(&handle);
         }
 
         void enter()
         {
-            EnterCriticalSection(handle);
+            EnterCriticalSection(&handle);
         }
 
         void leave()
         {
-            LeaveCriticalSection(handle);
+            LeaveCriticalSection(&handle);
         }
 
         native_handle_type native_handle()
         {
-            return handle;
+            return &handle;
         }
 
     private:
-        native_handle_type handle;
+        CRITICAL_SECTION handle;
         NO_COPY_ASSIGN(critical_section);
     };
 }

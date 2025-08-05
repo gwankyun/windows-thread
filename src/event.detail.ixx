@@ -20,7 +20,7 @@ EXPORT namespace detail::event
 
     void close(type& _t)
     {
-        CloseHandle(_t.handle);
+        ::CloseHandle(_t.handle);
     }
 
     lite::wait_status_type wait(type& _t, std::uint32_t _milliseconds = lite::infinite::value)
@@ -30,11 +30,11 @@ EXPORT namespace detail::event
 
     void set(type& _t)
     {
-        SetEvent(_t.handle);
+        ::SetEvent(_t.handle);
     }
 
     void reset(type& _t)
     {
-        ResetEvent(_t.handle);
+        ::ResetEvent(_t.handle);
     }
 } // namespace detail::event
