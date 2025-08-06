@@ -39,7 +39,7 @@ EXPORT namespace lite
 
         native_handle_type native_handle()
         {
-            return m_mutex.handle;
+            return m_mutex.handle.get();
         }
 
         critical_section& get_critical_section()
@@ -149,7 +149,7 @@ EXPORT namespace lite
         }
 
       private:
-        lite::ptr<mutex_type> m_mutex;
+        lite::unique_ptr<mutex_type> m_mutex;
         NO_COPY_ASSIGN(unique_lock);
     };
 

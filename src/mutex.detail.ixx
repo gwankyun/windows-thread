@@ -1,4 +1,4 @@
-module;
+﻿module;
 #include "common.h"
 #include <windows.h>
 
@@ -11,33 +11,41 @@ EXPORT namespace detail_mutex
 
     struct type
     {
-        native_handle_type handle;
+        //native_handle_type handle;
+        lite::Handle handle;
     };
 
     bool create(type & _t)
     {
-        _t.handle = CreateMutex(NULL, FALSE, NULL);
+        HANDLE handle = ::CreateMutex( // 返回互斥柄
+            NULL,                  // 不能被子進程承繼
+            FALSE,                 // 是否立即被當前線程擁有
+            NULL                   // 名稱
+        );
+        _t.handle.reset(handle);
         return true;
     }
 
     void close(type & _t)
     {
-        CloseHandle(_t.handle);
+        //CloseHandle(_t.handle.get);
+        _t.handle.reset();
     }
 
     void lock(type & _t)
     {
-        lite::wait(_t.handle);
+        lite::wait(_t.handle.get());
     }
 
     bool try_lock(type & _t)
     {
-        return lite::wait(_t.handle, 0) == lite::wait_status::ready;
+        return lite::wait(_t.handle.get(), 0) == lite::wait_status::ready;
+        //return _t.handle.wait() == lite::wait_status::ready;
     }
 
     void unlock(type & _t)
     {
-        ReleaseMutex(_t.handle);
+        ReleaseMutex(_t.handle.get());
     }
 
     struct lock_guard

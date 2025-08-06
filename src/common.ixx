@@ -5,6 +5,7 @@
 
 export module common;
 import std;
+export import unique_ptr;
 
 EXPORT namespace lite
 {
@@ -24,10 +25,7 @@ EXPORT namespace lite
     {
         static const std::uint32_t value = INFINITE;
     };
-} // namespace lite
 
-export namespace lite
-{
     struct IClose
     {
         // 纯虚函数，用于关闭资源
@@ -57,86 +55,18 @@ export namespace lite
         return wait_status::failed;
     }
 
-    class Handle
+    // 自定义删除器
+    struct HandleDeleter
     {
-      public:
-        Handle() = default;
-        ~Handle() = default;
-        wait_status_type wait(std::uint32_t _milliseconds = infinite::value)
+        void operator()(HANDLE handle) const
         {
-            return lite::wait(m_handle, _milliseconds);
-        }
-        void close()
-        {
-            ::CloseHandle(m_handle);
-        }
-
-      private:
-        HANDLE m_handle = NULL;
-    };
-
-    template <typename T>
-    class ptr
-    {
-      public:
-        ptr(T* _ptr = NULLPTR) : m_ptr(_ptr)
-        {
-        }
-
-        ptr& operator=(T* _ptr)
-        {
-            reset(_ptr);
-            return *this;
-        }
-
-        ~ptr()
-        {
-            this->reset();
-        }
-
-        T* get()
-        {
-            return m_ptr;
-        }
-
-        // 重载解引用运算符
-        T& operator*() const
-        {
-            return *m_ptr;
-        }
-
-        // 重载成员访问运算符
-        T* operator->() const
-        {
-            assert(m_ptr != NULLPTR);
-            return m_ptr;
-        }
-
-        // 获取原生指针
-        T* get() const
-        {
-            return m_ptr;
-        }
-
-        // 重置指针
-        void reset(T* ptr = NULLPTR) NOEXCEPT
-        {
-            if (m_ptr != ptr)
+            if (handle != INVALID_HANDLE_VALUE && handle != NULL)
             {
-                delete m_ptr;
-                m_ptr = ptr;
+                ::CloseHandle(handle);
             }
         }
-
-        T* release() NOEXCEPT
-        {
-            T* temp = this->get();
-            m_ptr = NULLPTR;
-            return temp;
-        }
-
-      private:
-        T* m_ptr;
-        NO_COPY_ASSIGN(ptr);
     };
+
+    // 定义一个别名，方便后续使用
+    typedef lite::unique_ptr<void, HandleDeleter> Handle;
 }; // namespace lite

@@ -23,6 +23,7 @@ target_sources(main
     src/event.detail.ixx
     src/critical_section.ixx
     src/condition_variable.ixx
+    src/unique_ptr.ixx
     src/main.ixx
 )
 target_link_libraries(main

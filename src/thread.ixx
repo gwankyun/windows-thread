@@ -50,7 +50,7 @@ EXPORT namespace lite
 
         native_handle_type native_handle()
         {
-            return handle.handle;
+            return handle.handle.get();
         }
 
         thread::id get_id() const NOEXCEPT

@@ -63,21 +63,23 @@ EXPORT namespace detail_thread
         }
 
       private:
-        lite::ptr<Base> base;
+        lite::unique_ptr<Base> base;
         NO_COPY_ASSIGN(function);
     };
 
     struct type
     {
-        type() : handle(NULLPTR), id(-1)
+        type() : id(-1)
         {
         }
 
         ~type() {};
 
-        HANDLE handle; // NULLPTR
+        //HANDLE handle; // NULLPTR
+        //lite::Handle handle;
+        lite::Handle handle;
         DWORD id;      // -1
-        lite::ptr<function> fn;
+        lite::unique_ptr<function> fn;
 
       private:
         NO_COPY_ASSIGN(type);
@@ -89,14 +91,15 @@ EXPORT namespace detail_thread
         _t.fn = new function(_fn);
 
         // 创建线程
-        _t.handle = ::CreateThread(NULLPTR,         // 默认安全属性
-                                   0,               // 默认栈大小
-                                   function::start, // 线程函数
-                                   _t.fn.get(),     // 传递给线程函数的参数
-                                   0,               // 默认创建标志
-                                   &_t.id           // 线程 ID
-        );
-        if (_t.handle == NULLPTR)
+        _t.handle.reset(::CreateThread( // 返回線程柄
+            NULLPTR,                    // 默认安全属性
+            0,                          // 默认栈大小
+            function::start,            // 线程函数
+            _t.fn.get(),                // 传递给线程函数的参数
+            0,                          // 默认创建标志
+            &_t.id                      // 线程 ID
+            ));
+        if (_t.handle.get() == NULLPTR)
         {
             return false;
         }
@@ -106,10 +109,11 @@ EXPORT namespace detail_thread
     void join(type & _t)
     {
         // 等待线程结束
-        lite::wait(_t.handle);
+        lite::wait(_t.handle.get());
 
         // 关闭线程句柄
-        CloseHandle(_t.handle);
+        //CloseHandle(_t.handle);
+        _t.handle.reset();
     }
 
     typedef HANDLE native_handle_type;
