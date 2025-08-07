@@ -1,5 +1,6 @@
 ﻿module;
 #include "common.h"
+#include <algorithm>
 #include <cassert>
 
 export module unique_ptr;
@@ -10,9 +11,9 @@ EXPORT namespace lite
     template <typename T>
     struct default_delete
     {
-        void operator()(T* ptr) const
+        void operator()(T* _ptr) const
         {
-            delete ptr;
+            delete _ptr;
         }
     };
 
@@ -21,7 +22,7 @@ EXPORT namespace lite
     {
         // 由于 void 指针不能直接删除，这里不实现具体操作，
         // 使用时需要提供自定义删除器
-        void operator()(void* ptr) const
+        void operator()(void* _ptr) const
         {
             // 这里不做操作，使用时必须提供自定义删除器
         }
@@ -31,9 +32,9 @@ EXPORT namespace lite
     template <typename T>
     struct default_delete<T[]>
     {
-        void operator()(T* ptr) const
+        void operator()(T* _ptr) const
         {
-            delete[] ptr;
+            delete[] _ptr;
         }
     };
 
@@ -46,8 +47,8 @@ EXPORT namespace lite
       public:
         typedef T element_type;
         typedef T* pointer;
-        unique_ptr(T* _ptr = NULLPTR, const Deleter& d = Deleter()) //
-            : m_ptr(_ptr), m_deleter(d)
+        unique_ptr(T* _ptr = NULLPTR, const Deleter& _d = Deleter()) //
+            : m_ptr(_ptr), m_deleter(_d)
         {
         }
 
@@ -82,14 +83,13 @@ EXPORT namespace lite
         }
 
         /// @brief 替换被管理对象
-        void reset(T* ptr = NULLPTR) NOEXCEPT
+        void reset(T* _ptr = NULLPTR) NOEXCEPT
         {
-            if (m_ptr != ptr)
+            if (m_ptr != _ptr)
             {
-                // delete m_ptr;
                 m_deleter(m_ptr);
             }
-            m_ptr = ptr;
+            m_ptr = _ptr;
         }
 
         /// @brief 返回一个指向被管理对象的指针，并释放所有权
@@ -98,6 +98,12 @@ EXPORT namespace lite
             T* temp = m_ptr;
             m_ptr = NULLPTR;
             return temp;
+        }
+
+        void swap(unique_ptr& _other) NOEXCEPT
+        {
+            std::swap(m_ptr, _other.m_ptr);
+            std::swap(m_deleter, _other.m_deleter);
         }
 
         // 获取删除器
@@ -112,18 +118,19 @@ EXPORT namespace lite
         }
 
         // 移动构造函数（C++98 用非 const 引用模拟）
-        unique_ptr(unique_ptr& other) //
-            : m_ptr(other.release()), m_deleter(other.get_deleter())
+        unique_ptr(unique_ptr& _other) //
+            : m_ptr(_other.release()), m_deleter(_other.get_deleter())
         {
+            swap(_other);
         }
 
         // 移动赋值运算符（C++98 用非 const 引用模拟）
-        unique_ptr& operator=(unique_ptr& other)
+        unique_ptr& operator=(unique_ptr& _other)
         {
-            if (this != &other)
+            if (this != &_other)
             {
-                reset(other.release());
-                m_deleter = other.get_deleter();
+                reset(_other.release());
+                m_deleter = _other.get_deleter();
             }
             return *this;
         }
@@ -141,21 +148,14 @@ EXPORT namespace lite
       public:
         typedef void element_type;
         typedef void* pointer;
-        unique_ptr(void* _ptr = NULLPTR, const Deleter& d = Deleter()) //
-            : m_ptr(_ptr), m_deleter(d)
+        unique_ptr(void* _ptr = NULLPTR, const Deleter& _d = Deleter()) //
+            : m_ptr(_ptr), m_deleter(_d)
         {
         }
 
         ~unique_ptr()
         {
             reset();
-        }
-
-        // 重载成员访问运算符
-        void* operator->() const
-        {
-            assert(m_ptr != NULLPTR);
-            return m_ptr;
         }
 
         /// @brief 返回指向被管理对象的指针
@@ -165,14 +165,13 @@ EXPORT namespace lite
         }
 
         /// @brief 替换被管理对象
-        void reset(void* ptr = NULLPTR) NOEXCEPT
+        void reset(void* _ptr = NULLPTR) NOEXCEPT
         {
-            if (m_ptr != ptr)
+            if (m_ptr != _ptr)
             {
-                // delete m_ptr;
                 m_deleter(m_ptr);
             }
-            m_ptr = ptr;
+            m_ptr = _ptr;
         }
 
         /// @brief 返回一个指向被管理对象的指针，并释放所有权
@@ -181,6 +180,12 @@ EXPORT namespace lite
             void* temp = m_ptr;
             m_ptr = NULLPTR;
             return temp;
+        }
+
+        void swap(unique_ptr& _other) NOEXCEPT
+        {
+            std::swap(m_ptr, _other.m_ptr);
+            std::swap(m_deleter, _other.m_deleter);
         }
 
         // 获取删除器
@@ -195,18 +200,18 @@ EXPORT namespace lite
         }
 
         // 移动构造函数（C++98 用非 const 引用模拟）
-        unique_ptr(unique_ptr& other) //
-            : m_ptr(other.release()), m_deleter(other.get_deleter())
+        unique_ptr(unique_ptr& _other) //
+            : m_ptr(_other.release()), m_deleter(_other.get_deleter())
         {
         }
 
         // 移动赋值运算符（C++98 用非 const 引用模拟）
-        unique_ptr& operator=(unique_ptr& other)
+        unique_ptr& operator=(unique_ptr& _other)
         {
-            if (this != &other)
+            if (this != &_other)
             {
-                reset(other.release());
-                m_deleter = other.get_deleter();
+                reset(_other.release());
+                m_deleter = _other.get_deleter();
             }
             return *this;
         }
@@ -223,8 +228,8 @@ EXPORT namespace lite
       public:
         typedef T element_type;
         typedef T* pointer;
-        unique_ptr(T* _ptr = NULLPTR, const Deleter& d = Deleter()) //
-            : m_ptr(_ptr), m_deleter(d)
+        unique_ptr(T* _ptr = NULLPTR, const Deleter& _d = Deleter()) //
+            : m_ptr(_ptr), m_deleter(_d)
         {
         }
 
@@ -246,14 +251,13 @@ EXPORT namespace lite
         }
 
         /// @brief 替换被管理对象
-        void reset(T* ptr = NULLPTR) NOEXCEPT
+        void reset(T* _ptr = NULLPTR) NOEXCEPT
         {
-            if (m_ptr != ptr)
+            if (m_ptr != _ptr)
             {
-                // delete m_ptr;
                 m_deleter(m_ptr);
             }
-            m_ptr = ptr;
+            m_ptr = _ptr;
         }
 
         /// @brief 返回一个指向被管理对象的指针，并释放所有权
@@ -264,10 +268,17 @@ EXPORT namespace lite
             return temp;
         }
 
-        // 重载下标运算符
-        T& operator[](size_t index) const
+        void swap(unique_ptr& _other) NOEXCEPT
         {
-            return m_ptr[index];
+            std::swap(m_ptr, _other.m_ptr);
+            std::swap(m_deleter, _other.m_deleter);
+        }
+
+        // 重载下标运算符
+        T& operator[](size_t _index) const
+        {
+            assert(m_ptr);
+            return m_ptr[_index];
         }
 
         // 获取删除器
@@ -282,18 +293,18 @@ EXPORT namespace lite
         }
 
         // 移动构造函数（C++98 用非 const 引用模拟）
-        unique_ptr(unique_ptr& other) //
-            : m_ptr(other.release()), m_deleter(other.get_deleter())
+        unique_ptr(unique_ptr& _other) //
+            : m_ptr(_other.release()), m_deleter(_other.get_deleter())
         {
         }
 
         // 移动赋值运算符（C++98 用非 const 引用模拟）
-        unique_ptr& operator=(unique_ptr& other)
+        unique_ptr& operator=(unique_ptr& _other)
         {
-            if (this != &other)
+            if (this != &_other)
             {
-                reset(other.release());
-                m_deleter = other.get_deleter();
+                reset(_other.release());
+                m_deleter = _other.get_deleter();
             }
             return *this;
         }
