@@ -11,16 +11,15 @@ EXPORT namespace detail_mutex
 
     struct type
     {
-        //native_handle_type handle;
         lite::Handle handle;
     };
 
     bool create(type & _t)
     {
         HANDLE handle = ::CreateMutex( // 返回互斥柄
-            NULL,                  // 不能被子進程承繼
-            FALSE,                 // 是否立即被當前線程擁有
-            NULL                   // 名稱
+            NULL,                      // 不能被子進程承繼
+            FALSE,                     // 是否立即被當前線程擁有
+            NULL                       // 名稱
         );
         _t.handle.reset(handle);
         return true;
@@ -28,7 +27,6 @@ EXPORT namespace detail_mutex
 
     void close(type & _t)
     {
-        //CloseHandle(_t.handle.get);
         _t.handle.reset();
     }
 
@@ -40,7 +38,6 @@ EXPORT namespace detail_mutex
     bool try_lock(type & _t)
     {
         return lite::wait(_t.handle.get(), 0) == lite::wait_status::ready;
-        //return _t.handle.wait() == lite::wait_status::ready;
     }
 
     void unlock(type & _t)

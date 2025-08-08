@@ -9,16 +9,16 @@ EXPORT namespace detail_thread
 {
     struct Base
     {
-        Base() {};
-        virtual ~Base() {};
+        Base() {}
+        virtual ~Base() {}
         virtual void run() = 0;
     };
 
     template <typename F>
     struct Derived : public Base
     {
-        explicit Derived(F _f) : f(_f) {};
-        ~Derived() {};
+        explicit Derived(F _f) : f(_f) {}
+        ~Derived() {}
 
         void run() OVERRIDE
         {
@@ -31,13 +31,12 @@ EXPORT namespace detail_thread
 
     struct function
     {
-        function() {};
+        function() {}
         template <typename Fn>
         function(Fn _fn) : base(new Derived<Fn>(_fn))
-        {
-        }
+        {}
 
-        ~function() {};
+        ~function() {}
 
         void run()
         {
@@ -69,16 +68,12 @@ EXPORT namespace detail_thread
 
     struct type
     {
-        type() : id(-1)
-        {
-        }
+        type() : id(-1) {}
 
-        ~type() {};
+        ~type() {}
 
-        //HANDLE handle; // NULLPTR
-        //lite::Handle handle;
         lite::Handle handle;
-        DWORD id;      // -1
+        DWORD id; // -1
         lite::unique_ptr<function> fn;
 
       private:
@@ -91,18 +86,20 @@ EXPORT namespace detail_thread
         _t.fn = new function(_fn);
 
         // 创建线程
-        _t.handle.reset(::CreateThread( // 返回線程柄
+        HANDLE handle = ::CreateThread( // 返回線程柄
             NULLPTR,                    // 默认安全属性
             0,                          // 默认栈大小
             function::start,            // 线程函数
             _t.fn.get(),                // 传递给线程函数的参数
             0,                          // 默认创建标志
             &_t.id                      // 线程 ID
-            ));
-        if (_t.handle.get() == NULLPTR)
+        );
+        if (handle == NULLPTR)
         {
             return false;
         }
+
+        _t.handle.reset(handle);
         return true;
     }
 
@@ -112,7 +109,6 @@ EXPORT namespace detail_thread
         lite::wait(_t.handle.get());
 
         // 关闭线程句柄
-        //CloseHandle(_t.handle);
         _t.handle.reset();
     }
 

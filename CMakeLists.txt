@@ -1,8 +1,8 @@
 ﻿# cmake版本
-cmake_minimum_required(VERSION 3.28...4.1)
+cmake_minimum_required(VERSION 3.28) # C++20模塊支持
 
 # 項目名
-project(windows_thread LANGUAGES CXX)
+project(windows_thread LANGUAGES CXX) # 指定C++可以跳過C編譯器檢測
 
 find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)

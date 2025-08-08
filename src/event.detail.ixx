@@ -10,7 +10,6 @@ EXPORT namespace detail_event
 {
     struct type
     {
-        //HANDLE handle;
         lite::Handle handle;
     };
 
@@ -27,14 +26,12 @@ EXPORT namespace detail_event
 
     void close(type & _t)
     {
-        //::CloseHandle(_t.handle);
         _t.handle.reset();
     }
 
     lite::wait_status_type wait(type & _t, std::uint32_t _milliseconds = lite::infinite::value)
     {
         return lite::wait(_t.handle.get(), _milliseconds);
-        //return _t.handle->wait(_milliseconds);
     }
 
     bool set(type & _t)
